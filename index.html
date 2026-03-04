@@ -95,46 +95,56 @@ svg{
 </style>
 
 <!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-analytics.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-<script>
-// --- CONFIGURACION FIREBASE ---
-const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_PROYECTO.firebaseapp.com",
-  databaseURL: "https://TU_PROYECTO-default-rtdb.firebaseio.com",
-  projectId: "TU_PROYECTO",
-  storageBucket: "TU_PROYECTO.appspot.com",
-  messagingSenderId: "TU_ID",
-  appId: "TU_APP_ID"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+  // Configuración de Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyBYZIWe_2pjKA0xv1K1Bbo9b3oHQZ41pF0",
+    authDomain: "enam-ra.firebaseapp.com",
+    databaseURL: "https://enam-ra-default-rtdb.firebaseio.com",
+    projectId: "enam-ra",
+    storageBucket: "enam-ra.firebasestorage.app",
+    messagingSenderId: "99510507097",
+    appId: "1:99510507097:web:675198128dffe3423d0348",
+    measurementId: "G-THN5DGZP9J"
+  };
 
-// --- LOGIN CON CORREO REAL ---
-function loginUser(){
-  let email = prompt("Ingresa tu correo:");
-  let password = prompt("Ingresa tu contraseña:");
+  // Inicializar Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const auth = getAuth();
+  const db = getDatabase();
 
-  firebase.auth().signInWithEmailAndPassword(email, password)
-  .then(() => {
-    alert("Bienvenido " + email);
-  })
-  .catch((error) => {
-    if(error.code === "auth/user-not-found"){
-      firebase.auth().createUserWithEmailAndPassword(email, password)
-      .then(() => alert("Cuenta creada y conectada: " + email))
-      .catch(e => alert("Error: " + e.message));
-    } else {
-      alert("Error: " + error.message);
+  // Login fácil
+  async function loginUser(){
+    let email = prompt("Ingresa tu correo:");
+    let password = prompt("Ingresa tu contraseña:");
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      alert("Bienvenido " + email);
+    } catch(error){
+      if(error.code === "auth/user-not-found"){
+        try {
+          await createUserWithEmailAndPassword(auth, email, password);
+          alert("Cuenta creada y conectada: " + email);
+        } catch(e){
+          alert("Error: " + e.message);
+        }
+      } else {
+        alert("Error: " + error.message);
+      }
     }
-  });
-}
-loginUser();
+  }
+  loginUser();
+</script>
 
-// --- SERVICE WORKER ---
+<!-- Service Worker -->
+<script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function() {
     navigator.serviceWorker.register("sw.js")
@@ -339,12 +349,10 @@ function completeTask(checkbox, player){
 
   if(player === "blue" && bluePosition < totalTasks){
     bluePosition++;
-    weeklyData.blue = bluePosition;
     updatePlayerInFirebase('blue', bluePosition);
   } 
   if(player === "white" && whitePosition < totalTasks){
     whitePosition++;
-    weeklyData.white = whitePosition;
     updatePlayerInFirebase('white', whitePosition);
   }
 
@@ -355,11 +363,11 @@ function completeTask(checkbox, player){
 
 // ---------------- FIREBASE ----------------
 function updatePlayerInFirebase(player, position){
-  db.ref('weeks/week'+currentWeek+'/'+player).set({ pos: position });
+  set(ref(db,'weeks/week'+currentWeek+'/'+player), { pos: position });
 }
 
 function listenOtherPlayer(player){
-  db.ref('weeks/week'+currentWeek+'/'+player+'/pos').on('value', snapshot => {
+  onValue(ref(db,'weeks/week'+currentWeek+'/'+player+'/pos'), snapshot => {
     const pos = snapshot.val();
     if(pos !== null){
       if(player === 'blue') bluePosition = pos;
@@ -370,7 +378,7 @@ function listenOtherPlayer(player){
 }
 
 function saveWeeklyData(){
-  db.ref('weeks/week'+currentWeek+'/summary').set({
+  set(ref(db,'weeks/week'+currentWeek+'/summary'), {
     blue: bluePosition,
     white: whitePosition,
     timestamp: new Date().getTime()
