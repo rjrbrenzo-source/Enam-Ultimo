@@ -73,6 +73,21 @@ svg{
   font-weight:600;
 }
 
+.progress-bar{
+  width:100%;
+  background:#334155;
+  border-radius:8px;
+  margin-top:10px;
+}
+
+.progress-fill{
+  height:14px;
+  background:#3b82f6;
+  border-radius:8px;
+  width:0%;
+  transition:0.3s;
+}
+
 </style>
 </head>
 
@@ -111,6 +126,8 @@ Fecha y hora límite:
 <h3>📋 Checklist ENAM</h3>
 <div id="taskContainer"></div>
 <p id="progress"></p>
+<div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+<p id="totalScore">🔵 Azul total: 0 | ⚪ Blanco total: 0</p>
 </div>
 
 </div>
@@ -127,9 +144,12 @@ let bluePosition = 0;
 let whitePosition = 0;
 let currentWeek = 1;
 
+let blueTotal = 0;  // acumulativo
+let whiteTotal = 0;
+
 let positions = [];
 
-// Guardar progreso semanal localmente (simulación)
+// Guardar progreso semanal localmente
 let weeklyData = { week: 1, blue:0, white:0, tasks:[] };
 
 // ---------------- INICIAR SEMANA ----------------
@@ -145,8 +165,8 @@ function startGame(){
   totalTasks = tasks;
   bluePosition = 0;
   whitePosition = 0;
-  weeklyData = { week: currentWeek, blue:0, white:0, tasks:[] };
 
+  weeklyData = { week: currentWeek, blue:0, white:0, tasks:[] };
   deadlineTime = new Date(deadlineValue).getTime();
   active = true;
 
@@ -155,6 +175,7 @@ function startGame(){
   generateSpiral();
   generateTasks();
   updatePlayers();
+  updateScoreDisplay();
   startCountdown();
 }
 
@@ -283,17 +304,33 @@ function updateProgress(){
   document.getElementById("progress").innerText =
     "🔵 " + bluePosition + " / " + totalTasks +
     " | ⚪ " + whitePosition + " / " + totalTasks;
+
+  // Barra de progreso azul
+  let percent = Math.max(bluePosition, whitePosition)/totalTasks*100;
+  document.getElementById("progressFill").style.width = percent + "%";
+}
+
+// ---------------- PUNTAJE ACUMULATIVO ----------------
+function updateScoreDisplay(){
+  document.getElementById("totalScore").innerText =
+    "🔵 Azul total: " + blueTotal + " | ⚪ Blanco total: " + whiteTotal;
 }
 
 // ---------------- GANADOR ----------------
 function checkWinner(){
   if(bluePosition >= totalTasks){
     alert("🔵 Azul llegó a la meta 🏆");
+    blueTotal += bluePosition;
     active = false;
+    currentWeek++;
+    updateScoreDisplay();
   }
   if(whitePosition >= totalTasks){
     alert("⚪ Blanco llegó a la meta 🏆");
+    whiteTotal += whitePosition;
     active = false;
+    currentWeek++;
+    updateScoreDisplay();
   }
 }
 
@@ -319,6 +356,12 @@ function startCountdown(){
       }else{
         alert("🤝 Empate");
       }
+
+      // Guardar puntaje semanal
+      blueTotal += bluePosition;
+      whiteTotal += whitePosition;
+      currentWeek++;
+      updateScoreDisplay();
 
     } else {
       let days = Math.floor(distance / (1000 * 60 * 60 * 24));
