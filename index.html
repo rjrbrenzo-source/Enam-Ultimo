@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ENAM RA - FASE 1</title>
 
+<!-- PWA manifest -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563eb">
+
+<!-- Estilos -->
 <style>
 body{
   margin:0;
@@ -87,8 +92,21 @@ svg{
   width:0%;
   transition:0.3s;
 }
-
 </style>
+
+<!-- Registrar Service Worker -->
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function() {
+    navigator.serviceWorker.register("sw.js")
+    .then(function(registration) {
+      console.log("Service Worker registrado:", registration.scope);
+    }, function(err) {
+      console.log("Error al registrar SW:", err);
+    });
+  });
+}
+</script>
 </head>
 
 <body>
@@ -133,8 +151,7 @@ Fecha y hora límite:
 </div>
 
 <script>
-
-// ---------------- VARIABLES GLOBALES ----------------
+// ---------------- VARIABLES ----------------
 let timer;
 let deadlineTime;
 let active = false;
@@ -144,12 +161,10 @@ let bluePosition = 0;
 let whitePosition = 0;
 let currentWeek = 1;
 
-let blueTotal = 0;  // acumulativo
+let blueTotal = 0;
 let whiteTotal = 0;
 
 let positions = [];
-
-// Guardar progreso semanal localmente
 let weeklyData = { week: 1, blue:0, white:0, tasks:[] };
 
 // ---------------- INICIAR SEMANA ----------------
@@ -165,7 +180,6 @@ function startGame(){
   totalTasks = tasks;
   bluePosition = 0;
   whitePosition = 0;
-
   weeklyData = { week: currentWeek, blue:0, white:0, tasks:[] };
   deadlineTime = new Date(deadlineValue).getTime();
   active = true;
@@ -284,7 +298,6 @@ function completeTask(checkbox, player){
     return;
   }
 
-  // Avance simultáneo
   if(player === "blue" && bluePosition < totalTasks){
     bluePosition++;
     weeklyData.blue = bluePosition;
@@ -305,7 +318,6 @@ function updateProgress(){
     "🔵 " + bluePosition + " / " + totalTasks +
     " | ⚪ " + whitePosition + " / " + totalTasks;
 
-  // Barra de progreso azul
   let percent = Math.max(bluePosition, whitePosition)/totalTasks*100;
   document.getElementById("progressFill").style.width = percent + "%";
 }
@@ -357,7 +369,6 @@ function startCountdown(){
         alert("🤝 Empate");
       }
 
-      // Guardar puntaje semanal
       blueTotal += bluePosition;
       whiteTotal += whitePosition;
       currentWeek++;
@@ -375,7 +386,6 @@ function startCountdown(){
 
   },1000);
 }
-
 </script>
 
 </body>
