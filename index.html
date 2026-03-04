@@ -21,6 +21,13 @@ button{
   border-radius:10px;
   background:#2563eb;
   color:white;
+  cursor:pointer;
+}
+input{
+  padding:5px;
+  border-radius:5px;
+  border:none;
+  margin:5px;
 }
 </style>
 </head>
@@ -29,9 +36,31 @@ button{
 <h1>🏥 ENAM RA</h1>
 
 <div class="box">
-<p>La app está funcionando correctamente 🎉</p>
-<button onclick="alert('Todo está bien 😎')">Probar</button>
+<h3>Configuración Semana</h3>
+
+Tareas (8-12):
+<input type="number" id="taskNumber" min="8" max="12" value="10">
+
+Deadline (minutos):
+<input type="number" id="deadlineInput" value="60">
+
+<br><br>
+
+<button onclick="startGame()">Iniciar Semana</button>
+
+<p id="status"></p>
+
 </div>
+
+<script>
+function startGame(){
+let tasks = document.getElementById("taskNumber").value;
+let deadline = document.getElementById("deadlineInput").value;
+
+document.getElementById("status").innerText =
+"Semana iniciada con " + tasks + " tareas y " + deadline + " minutos.";
+}
+</script>
 
 </body>
 </html>
