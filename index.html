@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ENAM RA - FASE 1</title>
+<title>ENAM RA - FASE 2</title>
 
 <!-- PWA manifest -->
 <link rel="manifest" href="manifest.json">
@@ -94,6 +94,31 @@ svg{
 }
 </style>
 
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_PROYECTO.firebaseapp.com",
+  databaseURL: "https://TU_PROYECTO-default-rtdb.firebaseio.com",
+  projectId: "TU_PROYECTO",
+  storageBucket: "TU_PROYECTO.appspot.com",
+  messagingSenderId: "TU_ID",
+  appId: "TU_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Login anónimo para pruebas rápidas
+firebase.auth().signInAnonymously().then(() => {
+  console.log("Jugador conectado a Firebase");
+});
+</script>
+
 <!-- Registrar Service Worker -->
 <script>
 if ("serviceWorker" in navigator) {
@@ -111,7 +136,7 @@ if ("serviceWorker" in navigator) {
 
 <body>
 
-<h1>🏥 ENAM RA - FASE 1</h1>
+<h1>🏥 ENAM RA - FASE 2</h1>
 
 <div class="container">
 
@@ -301,16 +326,38 @@ function completeTask(checkbox, player){
   if(player === "blue" && bluePosition < totalTasks){
     bluePosition++;
     weeklyData.blue = bluePosition;
+    updatePlayerInFirebase('blue', bluePosition);
   } 
   if(player === "white" && whitePosition < totalTasks){
     whitePosition++;
     weeklyData.white = whitePosition;
+    updatePlayerInFirebase('white', whitePosition);
   }
 
   checkbox.disabled = true;
   updatePlayers();
   checkWinner();
 }
+
+// ---------------- FIREBASE ----------------
+function updatePlayerInFirebase(player, position){
+  db.ref('week'+currentWeek+'/'+player).set({ pos: position });
+}
+
+function listenOtherPlayer(player){
+  db.ref('week'+currentWeek+'/'+player+'/pos').on('value', snapshot => {
+    const pos = snapshot.val();
+    if(pos !== null){
+      if(player === 'blue') bluePosition = pos;
+      if(player === 'white') whitePosition = pos;
+      updatePlayers();
+    }
+  });
+}
+
+// Llamar a los escuchadores al iniciar
+listenOtherPlayer('blue');
+listenOtherPlayer('white');
 
 // ---------------- PROGRESO ----------------
 function updateProgress(){
