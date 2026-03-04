@@ -5,11 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ENAM RA - Multijugador</title>
 
-<!-- PWA manifest -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2563eb">
 
-<!-- Estilos -->
 <style>
 body{
   margin:0;
@@ -18,15 +16,8 @@ body{
   color:white;
   text-align:center;
 }
-
 h1{ margin-top:20px; font-weight:700; }
-
-.container{
-  max-width:900px;
-  margin:auto;
-  padding:20px;
-}
-
+.container{ max-width:900px; margin:auto; padding:20px; }
 .box{
   background:#1e293b;
   padding:20px;
@@ -34,7 +25,6 @@ h1{ margin-top:20px; font-weight:700; }
   margin-top:20px;
   box-shadow:0 0 10px rgba(0,0,0,0.3);
 }
-
 button{
   padding:8px 14px;
   border:none;
@@ -46,90 +36,52 @@ button{
   font-weight:600;
   transition:0.2s;
 }
-button:hover{
-  background:#1d4ed8;
-}
-
-input{
-  padding:6px;
-  border-radius:5px;
-  border:none;
-  margin:5px;
-}
-
-.task{
-  text-align:left;
-  margin:8px 0;
-  font-size:14px;
-}
-
-svg{
-  background:#0f172a;
-  border-radius:20px;
-}
-
+button:hover{ background:#1d4ed8; }
+input{ padding:6px; border-radius:5px; border:none; margin:5px; }
+.task{ text-align:left; margin:8px 0; font-size:14px; }
+svg{ background:#0f172a; border-radius:20px; }
 .blue{ fill:#3b82f6; }
 .white{ fill:white; }
 .start{ fill:#facc15; }
 .meta{ fill:#22c55e; }
-
-#countdown, #weekDisplay, #loginMessage{
-  margin-top:10px;
-  font-weight:600;
-}
-
-.progress-bar{
-  width:100%;
-  background:#334155;
-  border-radius:8px;
-  margin-top:10px;
-}
-
-.progress-fill{
-  height:14px;
-  background:#3b82f6;
-  border-radius:8px;
-  width:0%;
-  transition:0.3s;
-}
+#countdown, #weekDisplay, #loginMessage{ margin-top:10px; font-weight:600; }
+.progress-bar{ width:100%; background:#334155; border-radius:8px; margin-top:10px; }
+.progress-fill{ height:14px; background:#3b82f6; border-radius:8px; width:0%; transition:0.3s; }
 </style>
 
 <!-- Firebase -->
 <script type="module">
-  // Import Firebase
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-analytics.js";
-  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-analytics.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-  // Firebase config
-  const firebaseConfig = {
-    apiKey: "AIzaSyBYZIWe_2pjKA0xv1K1Bbo9b3oHQZ41pF0",
-    authDomain: "enam-ra.firebaseapp.com",
-    databaseURL: "https://enam-ra-default-rtdb.firebaseio.com",
-    projectId: "enam-ra",
-    storageBucket: "enam-ra.firebasestorage.app",
-    messagingSenderId: "99510507097",
-    appId: "1:99510507097:web:675198128dffe3423d0348",
-    measurementId: "G-THN5DGZP9J"
-  };
+// Config Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyBYZIWe_2pjKA0xv1K1Bbo9b3oHQZ41pF0",
+  authDomain: "enam-ra.firebaseapp.com",
+  databaseURL: "https://enam-ra-default-rtdb.firebaseio.com",
+  projectId: "enam-ra",
+  storageBucket: "enam-ra.firebasestorage.app",
+  messagingSenderId: "99510507097",
+  appId: "1:99510507097:web:675198128dffe3423d0348",
+  measurementId: "G-THN5DGZP9J"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-  const auth = getAuth();
-  const db = getDatabase();
+// Inicializar Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const auth = getAuth();
+const db = getDatabase();
 </script>
 
-<!-- Service Worker -->
 <script>
+// Service Worker PWA
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function() {
     navigator.serviceWorker.register("sw.js")
-    .then(function(registration) {
-      console.log("Service Worker registrado:", registration.scope);
-    }, function(err) {
-      console.log("Error al registrar SW:", err);
-    });
+    .then(reg => console.log("Service Worker registrado:", reg.scope))
+    .catch(err => console.log("Error SW:", err));
   });
 }
 </script>
@@ -153,19 +105,11 @@ if ("serviceWorker" in navigator) {
 <div class="box">
 <h3>Configuración Semana</h3>
 Semana: <span id="weekDisplay">1</span><br><br>
-
 Tareas (8-12):
-<input type="number" id="taskNumber" min="8" max="12" value="10">
-
-<br><br>
-
+<input type="number" id="taskNumber" min="8" max="12" value="10"><br><br>
 Fecha y hora límite:
-<input type="datetime-local" id="deadlineInput">
-
-<br><br>
-
+<input type="datetime-local" id="deadlineInput"><br><br>
 <button onclick="startGame()">Iniciar Semana</button>
-
 <p id="countdown"></p>
 </div>
 
@@ -184,30 +128,16 @@ Fecha y hora límite:
 <p id="totalScore">🔵 Azul total: 0 | ⚪ Blanco total: 0</p>
 </div>
 
-</div>
-
 <script type="module">
-// ---------------- VARIABLES ----------------
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
-
+// Variables
 let timer;
 let deadlineTime;
 let active = false;
 let totalTasks = 0;
-
-let bluePosition = 0;
-let whitePosition = 0;
+let bluePosition = 0, whitePosition = 0;
 let currentWeek = 1;
-
-let blueTotal = 0;
-let whiteTotal = 0;
-
+let blueTotal = 0, whiteTotal = 0;
 let positions = [];
-let weeklyData = { week: 1, blue:0, white:0, tasks:[] };
-
-const auth = getAuth();
-const db = getDatabase();
 
 // ---------------- LOGIN ----------------
 async function loginOrCreate(){
@@ -240,44 +170,31 @@ async function loginOrCreate(){
 function startGame(){
   let tasks = parseInt(document.getElementById("taskNumber").value);
   let deadlineValue = document.getElementById("deadlineInput").value;
-
-  if(!deadlineValue){
-    alert("Selecciona fecha y hora límite");
-    return;
-  }
+  if(!deadlineValue){ alert("Selecciona fecha y hora límite"); return; }
 
   totalTasks = tasks;
-  bluePosition = 0;
-  whitePosition = 0;
-  weeklyData = { week: currentWeek, blue:0, white:0, tasks:[] };
+  bluePosition = 0; whitePosition = 0;
   deadlineTime = new Date(deadlineValue).getTime();
   active = true;
 
   document.getElementById("weekDisplay").innerText = currentWeek;
-
   generateSpiral();
   generateTasks();
   updatePlayers();
   updateScoreDisplay();
   startCountdown();
 
-  listenOtherPlayer('blue');
-  listenOtherPlayer('white');
+  listenOtherPlayer('blue'); listenOtherPlayer('white');
 }
 
 // ---------------- TABLERO ----------------
 function generateSpiral(){
   const svg = document.getElementById("board");
-  svg.innerHTML = "";
-  positions = [];
+  svg.innerHTML = ""; positions = [];
+  const centerX=200, centerY=200;
+  let angle=0, radius=20;
 
-  const centerX = 200;
-  const centerY = 200;
-
-  let angle = 0;
-  let radius = 20;
-
-  positions.push({x:centerX, y:centerY});
+  positions.push({x:centerX,y:centerY});
   let startCircle = document.createElementNS("http://www.w3.org/2000/svg","circle");
   startCircle.setAttribute("cx",centerX);
   startCircle.setAttribute("cy",centerY);
@@ -285,33 +202,20 @@ function generateSpiral(){
   startCircle.setAttribute("class","start");
   svg.appendChild(startCircle);
 
-  for(let i=1; i<=totalTasks; i++){
-    let x = centerX + radius * Math.cos(angle);
-    let y = centerY + radius * Math.sin(angle);
+  for(let i=1;i<=totalTasks;i++){
+    let x=centerX+radius*Math.cos(angle);
+    let y=centerY+radius*Math.sin(angle);
     positions.push({x,y});
 
-    let circle = document.createElementNS("http://www.w3.org/2000/svg","circle");
-    circle.setAttribute("cx",x);
-    circle.setAttribute("cy",y);
-    circle.setAttribute("r",12);
-
-    if(i === totalTasks){
-      circle.setAttribute("class","meta");
-      let text = document.createElementNS("http://www.w3.org/2000/svg","text");
-      text.setAttribute("x", x);
-      text.setAttribute("y", y+4);
-      text.setAttribute("text-anchor","middle");
-      text.setAttribute("fill","white");
-      text.setAttribute("font-size","10px");
-      text.textContent = "🏁 Meta";
+    let circle=document.createElementNS("http://www.w3.org/2000/svg","circle");
+    circle.setAttribute("cx",x); circle.setAttribute("cy",y); circle.setAttribute("r",12);
+    if(i===totalTasks){ circle.setAttribute("class","meta");
+      let text=document.createElementNS("http://www.w3.org/2000/svg","text");
+      text.setAttribute("x",x); text.setAttribute("y",y+4); text.setAttribute("text-anchor","middle");
+      text.setAttribute("fill","white"); text.setAttribute("font-size","10px"); text.textContent="🏁 Meta";
       svg.appendChild(text);
-    } else {
-      circle.setAttribute("fill","#334155");
-    }
-
-    angle += Math.PI/4;
-    radius += 15;
-    svg.appendChild(circle);
+    } else { circle.setAttribute("fill","#334155"); }
+    angle+=Math.PI/4; radius+=15; svg.appendChild(circle);
   }
 
   drawPlayers();
@@ -319,168 +223,102 @@ function generateSpiral(){
 
 // ---------------- FICHAS ----------------
 function drawPlayers(){
-  const svg = document.getElementById("board");
-
-  let blue = document.createElementNS("http://www.w3.org/2000/svg","circle");
-  blue.setAttribute("r",8);
-  blue.setAttribute("class","blue");
-  blue.setAttribute("id","bluePlayer");
-
-  let white = document.createElementNS("http://www.w3.org/2000/svg","circle");
-  white.setAttribute("r",8);
-  white.setAttribute("class","white");
-  white.setAttribute("id","whitePlayer");
-
-  svg.appendChild(blue);
-  svg.appendChild(white);
+  const svg=document.getElementById("board");
+  ['blue','white'].forEach(c=>{
+    let circle=document.createElementNS("http://www.w3.org/2000/svg","circle");
+    circle.setAttribute("r",8);
+    circle.setAttribute("class",c);
+    circle.setAttribute("id",c+"Player");
+    svg.appendChild(circle);
+  });
 }
 
 function updatePlayers(){
   document.getElementById("bluePlayer").setAttribute("cx",positions[bluePosition].x);
   document.getElementById("bluePlayer").setAttribute("cy",positions[bluePosition].y);
-
   document.getElementById("whitePlayer").setAttribute("cx",positions[whitePosition].x);
   document.getElementById("whitePlayer").setAttribute("cy",positions[whitePosition].y);
-
   updateProgress();
 }
 
 // ---------------- CHECKLIST ----------------
 function generateTasks(){
-  let container = document.getElementById("taskContainer");
-  container.innerHTML = "";
-
-  for(let i=1; i<=totalTasks; i++){
-    let div = document.createElement("div");
-    div.className = "task";
-
-    div.innerHTML = `
-      🔵 <input type="checkbox" onchange="completeTask(this,'blue')"> Tarea Azul ${i}<br>
-      ⚪ <input type="checkbox" onchange="completeTask(this,'white')"> Tarea Blanco ${i}
-    `;
+  let container=document.getElementById("taskContainer");
+  container.innerHTML="";
+  for(let i=1;i<=totalTasks;i++){
+    let div=document.createElement("div");
+    div.className="task";
+    div.innerHTML=`🔵 <input type="checkbox" onchange="completeTask(this,'blue')"> Tarea Azul ${i}<br>
+                  ⚪ <input type="checkbox" onchange="completeTask(this,'white')"> Tarea Blanco ${i}`;
     container.appendChild(div);
   }
 }
 
-function completeTask(checkbox, player){
-  if(!active){
-    checkbox.checked = false;
-    return;
-  }
-
-  if(player === "blue" && bluePosition < totalTasks){
-    bluePosition++;
-    updatePlayerInFirebase('blue', bluePosition);
-  } 
-  if(player === "white" && whitePosition < totalTasks){
-    whitePosition++;
-    updatePlayerInFirebase('white', whitePosition);
-  }
-
-  checkbox.disabled = true;
-  updatePlayers();
-  checkWinner();
+function completeTask(checkbox,player){
+  if(!active){ checkbox.checked=false; return; }
+  if(player==='blue' && bluePosition<totalTasks){ bluePosition++; updatePlayerInFirebase('blue',bluePosition); }
+  if(player==='white' && whitePosition<totalTasks){ whitePosition++; updatePlayerInFirebase('white',whitePosition); }
+  checkbox.disabled=true; updatePlayers(); checkWinner();
 }
 
 // ---------------- FIREBASE ----------------
-function updatePlayerInFirebase(player, position){
-  set(ref(db,'weeks/week'+currentWeek+'/'+player), { pos: position });
+function updatePlayerInFirebase(player,position){
+  set(ref(db,'weeks/week'+currentWeek+'/'+player),{pos:position});
 }
-
 function listenOtherPlayer(player){
-  onValue(ref(db,'weeks/week'+currentWeek+'/'+player+'/pos'), snapshot => {
-    const pos = snapshot.val();
-    if(pos !== null){
-      if(player === 'blue') bluePosition = pos;
-      if(player === 'white') whitePosition = pos;
+  onValue(ref(db,'weeks/week'+currentWeek+'/'+player+'/pos'),snapshot=>{
+    const pos=snapshot.val();
+    if(pos!==null){
+      if(player==='blue') bluePosition=pos;
+      if(player==='white') whitePosition=pos;
       updatePlayers();
     }
   });
 }
-
 function saveWeeklyData(){
-  set(ref(db,'weeks/week'+currentWeek+'/summary'), {
-    blue: bluePosition,
-    white: whitePosition,
-    timestamp: new Date().getTime()
+  set(ref(db,'weeks/week'+currentWeek+'/summary'),{
+    blue:bluePosition,
+    white:whitePosition,
+    timestamp:new Date().getTime()
   });
 }
 
 // ---------------- PROGRESO ----------------
 function updateProgress(){
-  document.getElementById("progress").innerText =
-    "🔵 " + bluePosition + " / " + totalTasks +
-    " | ⚪ " + whitePosition + " / " + totalTasks;
-
-  let percent = Math.max(bluePosition, whitePosition)/totalTasks*100;
-  document.getElementById("progressFill").style.width = percent + "%";
+  document.getElementById("progress").innerText="🔵 "+bluePosition+" / "+totalTasks+" | ⚪ "+whitePosition+" / "+totalTasks;
+  let percent=Math.max(bluePosition,whitePosition)/totalTasks*100;
+  document.getElementById("progressFill").style.width=percent+"%";
 }
-
-// ---------------- PUNTAJE ACUMULATIVO ----------------
 function updateScoreDisplay(){
-  document.getElementById("totalScore").innerText =
-    "🔵 Azul total: " + blueTotal + " | ⚪ Blanco total: " + whiteTotal;
+  document.getElementById("totalScore").innerText="🔵 Azul total: "+blueTotal+" | ⚪ Blanco total: "+whiteTotal;
 }
 
 // ---------------- GANADOR ----------------
 function checkWinner(){
-  if(bluePosition >= totalTasks){
-    alert("🔵 Azul llegó a la meta 🏆");
-    blueTotal += bluePosition;
-    active = false;
-    saveWeeklyData();
-    currentWeek++;
-    updateScoreDisplay();
-  }
-  if(whitePosition >= totalTasks){
-    alert("⚪ Blanco llegó a la meta 🏆");
-    whiteTotal += whitePosition;
-    active = false;
-    saveWeeklyData();
-    currentWeek++;
-    updateScoreDisplay();
-  }
+  if(bluePosition>=totalTasks){ alert("🔵 Azul llegó a la meta 🏆"); blueTotal+=bluePosition; active=false; saveWeeklyData(); currentWeek++; updateScoreDisplay(); }
+  if(whitePosition>=totalTasks){ alert("⚪ Blanco llegó a la meta 🏆"); whiteTotal+=whitePosition; active=false; saveWeeklyData(); currentWeek++; updateScoreDisplay(); }
 }
 
 // ---------------- CUENTA REGRESIVA ----------------
 function startCountdown(){
   clearInterval(timer);
-
-  timer = setInterval(function(){
+  timer=setInterval(()=>{
     if(!active) return;
-
-    let now = new Date().getTime();
-    let distance = deadlineTime - now;
-
-    if(distance <= 0){
-      clearInterval(timer);
-      active = false;
-      document.getElementById("countdown").innerText = "⛔ Semana Terminada";
-
-      if(bluePosition > whitePosition){
-        alert("🔵 Azul gana por avance 🏆");
-      }else if(whitePosition > bluePosition){
-        alert("⚪ Blanco gana por avance 🏆");
-      }else{
-        alert("🤝 Empate");
-      }
-
-      blueTotal += bluePosition;
-      whiteTotal += whitePosition;
-      saveWeeklyData();
-      currentWeek++;
-      updateScoreDisplay();
-
+    let now=new Date().getTime();
+    let distance=deadlineTime-now;
+    if(distance<=0){
+      clearInterval(timer); active=false; document.getElementById("countdown").innerText="⛔ Semana Terminada";
+      if(bluePosition>whitePosition) alert("🔵 Azul gana por avance 🏆");
+      else if(whitePosition>bluePosition) alert("⚪ Blanco gana por avance 🏆");
+      else alert("🤝 Empate");
+      blueTotal+=bluePosition; whiteTotal+=whitePosition; saveWeeklyData(); currentWeek++; updateScoreDisplay();
     } else {
-      let days = Math.floor(distance / (1000 * 60 * 60 * 24));
-      let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-      let seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-      document.getElementById("countdown").innerText =
-        "⏳ " + days + "d " + hours + "h " + minutes + "m " + seconds + "s";
+      let days=Math.floor(distance/(1000*60*60*24));
+      let hours=Math.floor((distance%(1000*60*60*24))/(1000*60*60));
+      let minutes=Math.floor((distance%(1000*60*60))/(1000*60));
+      let seconds=Math.floor((distance%(1000*60))/1000);
+      document.getElementById("countdown").innerText="⏳ "+days+"d "+hours+"h "+minutes+"m "+seconds+"s";
     }
-
   },1000);
 }
 </script>
