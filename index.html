@@ -3,10 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ENAM RA - Multijugador</title>
-
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2563eb">
+<title>ENAM RA - Solo Local</title>
 
 <style>
 body{
@@ -44,64 +41,17 @@ svg{ background:#0f172a; border-radius:20px; }
 .white{ fill:white; }
 .start{ fill:#facc15; }
 .meta{ fill:#22c55e; }
-#countdown, #weekDisplay, #loginMessage{ margin-top:10px; font-weight:600; }
+#countdown, #weekDisplay{ margin-top:10px; font-weight:600; }
 .progress-bar{ width:100%; background:#334155; border-radius:8px; margin-top:10px; }
 .progress-fill{ height:14px; background:#3b82f6; border-radius:8px; width:0%; transition:0.3s; }
 </style>
-
-<!-- Firebase -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-analytics.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
-
-// Config Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyBYZIWe_2pjKA0xv1K1Bbo9b3oHQZ41pF0",
-  authDomain: "enam-ra.firebaseapp.com",
-  databaseURL: "https://enam-ra-default-rtdb.firebaseio.com",
-  projectId: "enam-ra",
-  storageBucket: "enam-ra.firebasestorage.app",
-  messagingSenderId: "99510507097",
-  appId: "1:99510507097:web:675198128dffe3423d0348",
-  measurementId: "G-THN5DGZP9J"
-};
-
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const auth = getAuth();
-const db = getDatabase();
-</script>
-
-<script>
-// Service Worker PWA
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", function() {
-    navigator.serviceWorker.register("sw.js")
-    .then(reg => console.log("Service Worker registrado:", reg.scope))
-    .catch(err => console.log("Error SW:", err));
-  });
-}
-</script>
 </head>
 <body>
 
-<h1>🏥 ENAM RA - Multijugador</h1>
+<h1>🏥 ENAM RA - Local</h1>
 
 <div class="container">
 
-<!-- LOGIN -->
-<div class="box">
-<h3>Login</h3>
-<input id="emailInput" type="email" placeholder="Correo">
-<input id="passInput" type="password" placeholder="Contraseña">
-<button onclick="loginOrCreate()">Conectar</button>
-<p id="loginMessage"></p>
-</div>
-
-<!-- CONFIGURACIÓN SEMANA -->
 <div class="box">
 <h3>Configuración Semana</h3>
 Semana: <span id="weekDisplay">1</span><br><br>
@@ -113,13 +63,11 @@ Fecha y hora límite:
 <p id="countdown"></p>
 </div>
 
-<!-- TABLERO -->
 <div class="box">
 <h3>🎲 Tablero</h3>
 <svg id="board" width="400" height="400"></svg>
 </div>
 
-<!-- CHECKLIST -->
 <div class="box">
 <h3>📋 Checklist ENAM</h3>
 <div id="taskContainer"></div>
@@ -128,7 +76,7 @@ Fecha y hora límite:
 <p id="totalScore">🔵 Azul total: 0 | ⚪ Blanco total: 0</p>
 </div>
 
-<script type="module">
+<script>
 // Variables
 let timer;
 let deadlineTime;
@@ -138,33 +86,6 @@ let bluePosition = 0, whitePosition = 0;
 let currentWeek = 1;
 let blueTotal = 0, whiteTotal = 0;
 let positions = [];
-
-// ---------------- LOGIN ----------------
-async function loginOrCreate(){
-  const email = document.getElementById("emailInput").value;
-  const password = document.getElementById("passInput").value;
-
-  if(!email || !password){
-    document.getElementById("loginMessage").innerText = "Ingresa correo y contraseña";
-    return;
-  }
-
-  try {
-    await signInWithEmailAndPassword(auth,email,password);
-    document.getElementById("loginMessage").innerText = "✅ Conectado como " + email;
-  } catch(e){
-    if(e.code === "auth/user-not-found"){
-      try {
-        await createUserWithEmailAndPassword(auth,email,password);
-        document.getElementById("loginMessage").innerText = "✅ Cuenta creada: " + email;
-      } catch(err2){
-        document.getElementById("loginMessage").innerText = "Error: " + err2.message;
-      }
-    } else {
-      document.getElementById("loginMessage").innerText = "Error: " + e.message;
-    }
-  }
-}
 
 // ---------------- INICIAR SEMANA ----------------
 function startGame(){
@@ -183,14 +104,12 @@ function startGame(){
   updatePlayers();
   updateScoreDisplay();
   startCountdown();
-
-  listenOtherPlayer('blue'); listenOtherPlayer('white');
 }
 
 // ---------------- TABLERO ----------------
 function generateSpiral(){
   const svg = document.getElementById("board");
-  svg.innerHTML = ""; positions = [];
+  svg.innerHTML=""; positions=[];
   const centerX=200, centerY=200;
   let angle=0, radius=20;
 
@@ -256,31 +175,9 @@ function generateTasks(){
 
 function completeTask(checkbox,player){
   if(!active){ checkbox.checked=false; return; }
-  if(player==='blue' && bluePosition<totalTasks){ bluePosition++; updatePlayerInFirebase('blue',bluePosition); }
-  if(player==='white' && whitePosition<totalTasks){ whitePosition++; updatePlayerInFirebase('white',whitePosition); }
+  if(player==='blue' && bluePosition<totalTasks){ bluePosition++; }
+  if(player==='white' && whitePosition<totalTasks){ whitePosition++; }
   checkbox.disabled=true; updatePlayers(); checkWinner();
-}
-
-// ---------------- FIREBASE ----------------
-function updatePlayerInFirebase(player,position){
-  set(ref(db,'weeks/week'+currentWeek+'/'+player),{pos:position});
-}
-function listenOtherPlayer(player){
-  onValue(ref(db,'weeks/week'+currentWeek+'/'+player+'/pos'),snapshot=>{
-    const pos=snapshot.val();
-    if(pos!==null){
-      if(player==='blue') bluePosition=pos;
-      if(player==='white') whitePosition=pos;
-      updatePlayers();
-    }
-  });
-}
-function saveWeeklyData(){
-  set(ref(db,'weeks/week'+currentWeek+'/summary'),{
-    blue:bluePosition,
-    white:whitePosition,
-    timestamp:new Date().getTime()
-  });
 }
 
 // ---------------- PROGRESO ----------------
@@ -295,8 +192,8 @@ function updateScoreDisplay(){
 
 // ---------------- GANADOR ----------------
 function checkWinner(){
-  if(bluePosition>=totalTasks){ alert("🔵 Azul llegó a la meta 🏆"); blueTotal+=bluePosition; active=false; saveWeeklyData(); currentWeek++; updateScoreDisplay(); }
-  if(whitePosition>=totalTasks){ alert("⚪ Blanco llegó a la meta 🏆"); whiteTotal+=whitePosition; active=false; saveWeeklyData(); currentWeek++; updateScoreDisplay(); }
+  if(bluePosition>=totalTasks){ alert("🔵 Azul llegó a la meta 🏆"); blueTotal+=bluePosition; active=false; currentWeek++; updateScoreDisplay(); }
+  if(whitePosition>=totalTasks){ alert("⚪ Blanco llegó a la meta 🏆"); whiteTotal+=whitePosition; active=false; currentWeek++; updateScoreDisplay(); }
 }
 
 // ---------------- CUENTA REGRESIVA ----------------
@@ -311,7 +208,7 @@ function startCountdown(){
       if(bluePosition>whitePosition) alert("🔵 Azul gana por avance 🏆");
       else if(whitePosition>bluePosition) alert("⚪ Blanco gana por avance 🏆");
       else alert("🤝 Empate");
-      blueTotal+=bluePosition; whiteTotal+=whitePosition; saveWeeklyData(); currentWeek++; updateScoreDisplay();
+      blueTotal+=bluePosition; whiteTotal+=whitePosition; currentWeek++; updateScoreDisplay();
     } else {
       let days=Math.floor(distance/(1000*60*60*24));
       let hours=Math.floor((distance%(1000*60*60*24))/(1000*60*60));
