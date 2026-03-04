@@ -73,7 +73,7 @@ svg{
 .start{ fill:#facc15; }
 .meta{ fill:#22c55e; }
 
-#countdown, #weekDisplay{
+#countdown, #weekDisplay, #loginMessage{
   margin-top:10px;
   font-weight:600;
 }
@@ -96,13 +96,13 @@ svg{
 
 <!-- Firebase -->
 <script type="module">
-  // Import the functions you need from the SDKs you need
+  // Import Firebase
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-analytics.js";
   import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
   import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-  // Configuración de Firebase
+  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyBYZIWe_2pjKA0xv1K1Bbo9b3oHQZ41pF0",
     authDomain: "enam-ra.firebaseapp.com",
@@ -114,33 +114,10 @@ svg{
     measurementId: "G-THN5DGZP9J"
   };
 
-  // Inicializar Firebase
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
   const auth = getAuth();
   const db = getDatabase();
-
-  // Login fácil
-  async function loginUser(){
-    let email = prompt("Ingresa tu correo:");
-    let password = prompt("Ingresa tu contraseña:");
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert("Bienvenido " + email);
-    } catch(error){
-      if(error.code === "auth/user-not-found"){
-        try {
-          await createUserWithEmailAndPassword(auth, email, password);
-          alert("Cuenta creada y conectada: " + email);
-        } catch(e){
-          alert("Error: " + e.message);
-        }
-      } else {
-        alert("Error: " + error.message);
-      }
-    }
-  }
-  loginUser();
 </script>
 
 <!-- Service Worker -->
@@ -163,9 +140,18 @@ if ("serviceWorker" in navigator) {
 
 <div class="container">
 
+<!-- LOGIN -->
+<div class="box">
+<h3>Login</h3>
+<input id="emailInput" type="email" placeholder="Correo">
+<input id="passInput" type="password" placeholder="Contraseña">
+<button onclick="loginOrCreate()">Conectar</button>
+<p id="loginMessage"></p>
+</div>
+
+<!-- CONFIGURACIÓN SEMANA -->
 <div class="box">
 <h3>Configuración Semana</h3>
-
 Semana: <span id="weekDisplay">1</span><br><br>
 
 Tareas (8-12):
@@ -183,11 +169,13 @@ Fecha y hora límite:
 <p id="countdown"></p>
 </div>
 
+<!-- TABLERO -->
 <div class="box">
 <h3>🎲 Tablero</h3>
 <svg id="board" width="400" height="400"></svg>
 </div>
 
+<!-- CHECKLIST -->
 <div class="box">
 <h3>📋 Checklist ENAM</h3>
 <div id="taskContainer"></div>
@@ -198,8 +186,11 @@ Fecha y hora límite:
 
 </div>
 
-<script>
+<script type="module">
 // ---------------- VARIABLES ----------------
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
 let timer;
 let deadlineTime;
 let active = false;
@@ -214,6 +205,36 @@ let whiteTotal = 0;
 
 let positions = [];
 let weeklyData = { week: 1, blue:0, white:0, tasks:[] };
+
+const auth = getAuth();
+const db = getDatabase();
+
+// ---------------- LOGIN ----------------
+async function loginOrCreate(){
+  const email = document.getElementById("emailInput").value;
+  const password = document.getElementById("passInput").value;
+
+  if(!email || !password){
+    document.getElementById("loginMessage").innerText = "Ingresa correo y contraseña";
+    return;
+  }
+
+  try {
+    await signInWithEmailAndPassword(auth,email,password);
+    document.getElementById("loginMessage").innerText = "✅ Conectado como " + email;
+  } catch(e){
+    if(e.code === "auth/user-not-found"){
+      try {
+        await createUserWithEmailAndPassword(auth,email,password);
+        document.getElementById("loginMessage").innerText = "✅ Cuenta creada: " + email;
+      } catch(err2){
+        document.getElementById("loginMessage").innerText = "Error: " + err2.message;
+      }
+    } else {
+      document.getElementById("loginMessage").innerText = "Error: " + e.message;
+    }
+  }
+}
 
 // ---------------- INICIAR SEMANA ----------------
 function startGame(){
