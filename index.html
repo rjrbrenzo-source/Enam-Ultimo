@@ -29,10 +29,6 @@ h1{ margin-top:20px; }
   margin-top:20px;
 }
 
-.board{
-  margin-top:20px;
-}
-
 button{
   padding:6px 12px;
   border:none;
@@ -60,13 +56,13 @@ svg{
   border-radius:20px;
 }
 
-#progress{
+.blue{ fill:#3b82f6; }
+.white{ fill:white; }
+
+#turn{
   margin-top:10px;
   font-weight:bold;
 }
-
-.blue{ fill:#3b82f6; }
-.white{ fill:white; }
 
 </style>
 </head>
@@ -93,9 +89,10 @@ Fecha y hora límite:
 <button onclick="startGame()">Iniciar Semana</button>
 
 <p id="countdown"></p>
+<p id="turn"></p>
 </div>
 
-<div class="box board">
+<div class="box">
 <h3>🎲 Tablero</h3>
 <svg id="board" width="400" height="400"></svg>
 </div>
@@ -114,9 +111,12 @@ let timer;
 let deadlineTime;
 let active = false;
 let totalTasks = 0;
+
 let bluePosition = 0;
 let whitePosition = 0;
+
 let positions = [];
+let currentTurn = "blue";
 
 function startGame(){
 
@@ -129,14 +129,17 @@ return;
 }
 
 totalTasks = tasks;
+
 bluePosition = 0;
 whitePosition = 0;
+currentTurn = "blue";
 
 deadlineTime = new Date(deadlineValue).getTime();
 active = true;
 
 generateSpiral();
 generateTasks();
+updateTurn();
 startCountdown();
 }
 
@@ -148,9 +151,21 @@ positions = [];
 
 const centerX = 200;
 const centerY = 200;
+
 let angle = 0;
 let radius = 20;
 
+/* Punto inicial */
+positions.push({x:centerX, y:centerY});
+
+let startCircle = document.createElementNS("http://www.w3.org/2000/svg","circle");
+startCircle.setAttribute("cx",centerX);
+startCircle.setAttribute("cy",centerY);
+startCircle.setAttribute("r",14);
+startCircle.setAttribute("fill","#475569");
+svg.appendChild(startCircle);
+
+/* Casillas de tareas */
 for(let i=0; i<totalTasks; i++){
 
 let x = centerX + radius * Math.cos(angle);
@@ -166,7 +181,7 @@ circle.setAttribute("fill","#334155");
 svg.appendChild(circle);
 
 angle += Math.PI/4;
-radius += 12;
+radius += 15;
 }
 
 drawPlayers();
@@ -177,38 +192,19 @@ function drawPlayers(){
 const svg = document.getElementById("board");
 
 let blue = document.createElementNS("http://www.w3.org/2000/svg","circle");
-blue.setAttribute("cx",positions[0].x);
-blue.setAttribute("cy",positions[0].y);
 blue.setAttribute("r",8);
 blue.setAttribute("class","blue");
 blue.setAttribute("id","bluePlayer");
 
 let white = document.createElementNS("http://www.w3.org/2000/svg","circle");
-white.setAttribute("cx",positions[0].x);
-white.setAttribute("cy",positions[0].y);
 white.setAttribute("r",8);
 white.setAttribute("class","white");
 white.setAttribute("id","whitePlayer");
 
 svg.appendChild(blue);
 svg.appendChild(white);
-}
-
-function movePlayer(player){
-
-if(!active) return;
-
-if(player === "blue" && bluePosition < totalTasks-1){
-bluePosition++;
-}
-
-if(player === "white" && whitePosition < totalTasks-1){
-whitePosition++;
-}
 
 updatePlayers();
-checkWinner();
-updateProgress();
 }
 
 function updatePlayers(){
@@ -224,19 +220,8 @@ document.getElementById("whitePlayer")
 
 document.getElementById("whitePlayer")
 .setAttribute("cy",positions[whitePosition].y);
-}
 
-function checkWinner(){
-
-if(bluePosition === totalTasks-1){
-alert("🔵 Azul llegó a la meta 🏆");
-active = false;
-}
-
-if(whitePosition === totalTasks-1){
-alert("⚪ Blanco llegó a la meta 🏆");
-active = false;
-}
+updateProgress();
 }
 
 function generateTasks(){
@@ -250,30 +235,66 @@ let div = document.createElement("div");
 div.className = "task";
 
 div.innerHTML = `
-<input type="checkbox" onchange="completeTask(this)">
+<input type="checkbox" onchange="completeTask(this, ${i})">
  Tarea médica ${i}
- <button onclick="movePlayer('blue')">🔵</button>
- <button onclick="movePlayer('white')">⚪</button>
 `;
 
 container.appendChild(div);
 }
-
-updateProgress();
 }
 
-function completeTask(checkbox){
+function completeTask(checkbox, taskNumber){
 
 if(!active){
 checkbox.checked = false;
 return;
 }
 
+/* Solo permite avanzar si corresponde a su turno */
+if(currentTurn === "blue"){
+if(bluePosition + 1 !== taskNumber){
+checkbox.checked = false;
+alert("🔵 Debes completar la siguiente tarea en orden");
+return;
+}
+bluePosition++;
+currentTurn = "white";
+}else{
+if(whitePosition + 1 !== taskNumber){
+checkbox.checked = false;
+alert("⚪ Debes completar la siguiente tarea en orden");
+return;
+}
+whitePosition++;
+currentTurn = "blue";
+}
+
 checkbox.disabled = true;
+
+updatePlayers();
+updateTurn();
+checkWinner();
+}
+
+function updateTurn(){
+document.getElementById("turn").innerText =
+currentTurn === "blue" ? "Turno: 🔵 Azul" : "Turno: ⚪ Blanco";
+}
+
+function checkWinner(){
+
+if(bluePosition === totalTasks){
+alert("🔵 Azul llegó a la meta 🏆");
+active = false;
+}
+
+if(whitePosition === totalTasks){
+alert("⚪ Blanco llegó a la meta 🏆");
+active = false;
+}
 }
 
 function updateProgress(){
-
 document.getElementById("progress").innerText =
 "🔵 " + bluePosition + " / " + totalTasks +
 " | ⚪ " + whitePosition + " / " + totalTasks;
@@ -297,9 +318,9 @@ active = false;
 document.getElementById("countdown").innerText = "⛔ Semana Terminada";
 
 if(bluePosition > whitePosition){
-alert("🔵 Azul gana por estar más cerca 🏆");
+alert("🔵 Azul gana por avance 🏆");
 }else if(whitePosition > bluePosition){
-alert("⚪ Blanco gana por estar más cerca 🏆");
+alert("⚪ Blanco gana por avance 🏆");
 }else{
 alert("🤝 Empate");
 }
@@ -313,7 +334,6 @@ let seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
 document.getElementById("countdown").innerText =
 "⏳ " + days + "d " + hours + "h " + minutes + "m " + seconds + "s";
-
 }
 
 },1000);
