@@ -4,43 +4,74 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ENAM RA</title>
+
 <style>
 body{
   margin:0;
-  font-family:Arial;
+  font-family:Arial, sans-serif;
   background:#0f172a;
   color:white;
   text-align:center;
 }
-.box{
-  margin-top:40px;
+
+h1{
+  margin-top:20px;
 }
+
+.container{
+  max-width:600px;
+  margin:auto;
+  padding:20px;
+}
+
+.box{
+  background:#1e293b;
+  padding:20px;
+  border-radius:15px;
+  margin-top:20px;
+}
+
 button{
-  padding:10px 20px;
+  padding:8px 15px;
   border:none;
-  border-radius:10px;
+  border-radius:8px;
   background:#2563eb;
   color:white;
   cursor:pointer;
 }
+
 input{
   padding:5px;
   border-radius:5px;
   border:none;
   margin:5px;
 }
+
+.task{
+  text-align:left;
+  margin:8px 0;
+}
+
 #countdown{
-  font-size:18px;
   font-weight:bold;
-  margin-top:15px;
+  margin-top:10px;
+}
+
+#progress{
+  margin-top:10px;
+  font-weight:bold;
 }
 </style>
 </head>
+
 <body>
 
 <h1>🏥 ENAM RA</h1>
 
+<div class="container">
+
 <div class="box">
+
 <h3>Configuración Semana</h3>
 
 Tareas (8-12):
@@ -60,15 +91,25 @@ Fecha y hora límite:
 
 </div>
 
+<div class="box">
+<h3>📋 Checklist ENAM</h3>
+<div id="taskContainer"></div>
+<p id="progress"></p>
+</div>
+
+</div>
+
 <script>
 
 let timer;
 let deadlineTime;
 let active = false;
+let totalTasks = 0;
+let completedTasks = 0;
 
 function startGame(){
 
-let tasks = document.getElementById("taskNumber").value;
+let tasks = parseInt(document.getElementById("taskNumber").value);
 let deadlineValue = document.getElementById("deadlineInput").value;
 
 if(!deadlineValue){
@@ -76,13 +117,56 @@ alert("Selecciona fecha y hora límite");
 return;
 }
 
+totalTasks = tasks;
+completedTasks = 0;
+
 deadlineTime = new Date(deadlineValue).getTime();
 active = true;
 
 document.getElementById("status").innerText =
 "Semana iniciada con " + tasks + " tareas.";
 
+generateTasks();
 startCountdown();
+}
+
+function generateTasks(){
+
+let container = document.getElementById("taskContainer");
+container.innerHTML = "";
+
+for(let i=1; i<=totalTasks; i++){
+
+let div = document.createElement("div");
+div.className = "task";
+
+div.innerHTML = `
+<input type="checkbox" onchange="completeTask(this)">
+ Tarea médica ${i}
+`;
+
+container.appendChild(div);
+}
+
+updateProgress();
+}
+
+function completeTask(checkbox){
+
+if(!active){
+checkbox.checked = false;
+return;
+}
+
+checkbox.disabled = true;
+completedTasks++;
+updateProgress();
+}
+
+function updateProgress(){
+
+document.getElementById("progress").innerText =
+"Progreso: " + completedTasks + " / " + totalTasks;
 }
 
 function startCountdown(){
