@@ -51,10 +51,6 @@ input{
   margin:8px 0;
 }
 
-.task span{
-  margin-left:5px;
-}
-
 svg{
   background:#0f172a;
   border-radius:20px;
@@ -123,7 +119,6 @@ let whitePosition = 0;
 let positions = [];
 
 function startGame(){
-
   let tasks = parseInt(document.getElementById("taskNumber").value);
   let deadlineValue = document.getElementById("deadlineInput").value;
 
@@ -133,10 +128,8 @@ function startGame(){
   }
 
   totalTasks = tasks;
-
   bluePosition = 0;
   whitePosition = 0;
-
   deadlineTime = new Date(deadlineValue).getTime();
   active = true;
 
@@ -147,7 +140,6 @@ function startGame(){
 }
 
 function generateSpiral(){
-
   const svg = document.getElementById("board");
   svg.innerHTML = "";
   positions = [];
@@ -160,7 +152,6 @@ function generateSpiral(){
 
   /* Punto inicial */
   positions.push({x:centerX, y:centerY});
-
   let startCircle = document.createElementNS("http://www.w3.org/2000/svg","circle");
   startCircle.setAttribute("cx",centerX);
   startCircle.setAttribute("cy",centerY);
@@ -172,7 +163,6 @@ function generateSpiral(){
   for(let i=1; i<=totalTasks; i++){
     let x = centerX + radius * Math.cos(angle);
     let y = centerY + radius * Math.sin(angle);
-
     positions.push({x,y});
 
     let circle = document.createElementNS("http://www.w3.org/2000/svg","circle");
@@ -180,17 +170,8 @@ function generateSpiral(){
     circle.setAttribute("cy",y);
     circle.setAttribute("r",12);
 
-    /* Si es la última casilla */
     if(i === totalTasks){
       circle.setAttribute("class","meta");
-    } else {
-      circle.setAttribute("fill","#334155");
-    }
-
-    svg.appendChild(circle);
-
-    /* Texto Meta en la última casilla */
-    if(i === totalTasks){
       let text = document.createElementNS("http://www.w3.org/2000/svg","text");
       text.setAttribute("x", x);
       text.setAttribute("y", y+4);
@@ -199,10 +180,13 @@ function generateSpiral(){
       text.setAttribute("font-size","10px");
       text.textContent = "🏁 Meta";
       svg.appendChild(text);
+    } else {
+      circle.setAttribute("fill","#334155");
     }
 
     angle += Math.PI/4;
     radius += 15;
+    svg.appendChild(circle);
   }
 
   drawPlayers();
@@ -240,41 +224,31 @@ function generateTasks(){
   container.innerHTML = "";
 
   for(let i=1; i<=totalTasks; i++){
-
     let div = document.createElement("div");
     div.className = "task";
 
     div.innerHTML = `
-      🔵 <input type="checkbox" onchange="completeTask(this,'blue', ${i})"> Tarea Azul ${i}<br>
-      ⚪ <input type="checkbox" onchange="completeTask(this,'white', ${i})"> Tarea Blanco ${i}
+      🔵 <input type="checkbox" onchange="completeTask(this,'blue')"> Tarea Azul ${i}<br>
+      ⚪ <input type="checkbox" onchange="completeTask(this,'white')"> Tarea Blanco ${i}
     `;
-
     container.appendChild(div);
   }
 }
 
-function completeTask(checkbox, player, taskNumber){
-
+function completeTask(checkbox, player){
   if(!active){
     checkbox.checked = false;
     return;
   }
 
-  /* Verifica que no se salten tareas */
   if(player === "blue"){
-    if(taskNumber !== bluePosition +1){
-      checkbox.checked = false;
-      alert("🔵 Debes completar la siguiente tarea en orden");
-      return;
+    if(bluePosition < totalTasks){
+      bluePosition++;
     }
-    bluePosition++;
   } else {
-    if(taskNumber !== whitePosition +1){
-      checkbox.checked = false;
-      alert("⚪ Debes completar la siguiente tarea en orden");
-      return;
+    if(whitePosition < totalTasks){
+      whitePosition++;
     }
-    whitePosition++;
   }
 
   checkbox.disabled = true;
@@ -289,23 +263,21 @@ function updateProgress(){
 }
 
 function checkWinner(){
-  if(bluePosition === totalTasks){
+  if(bluePosition >= totalTasks){
     alert("🔵 Azul llegó a la meta 🏆");
     active = false;
   }
 
-  if(whitePosition === totalTasks){
+  if(whitePosition >= totalTasks){
     alert("⚪ Blanco llegó a la meta 🏆");
     active = false;
   }
 }
 
 function startCountdown(){
-
   clearInterval(timer);
 
   timer = setInterval(function(){
-
     if(!active) return;
 
     let now = new Date().getTime();
@@ -324,15 +296,14 @@ function startCountdown(){
         alert("🤝 Empate");
       }
 
-    }else{
-
+    } else {
       let days = Math.floor(distance / (1000 * 60 * 60 * 24));
       let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
       let seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
       document.getElementById("countdown").innerText =
-      "⏳ " + days + "d " + hours + "h " + minutes + "m " + seconds + "s";
+        "⏳ " + days + "d " + hours + "h " + minutes + "m " + seconds + "s";
     }
 
   },1000);
