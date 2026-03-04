@@ -51,6 +51,10 @@ input{
   margin:8px 0;
 }
 
+.task span{
+  margin-left:5px;
+}
+
 svg{
   background:#0f172a;
   border-radius:20px;
@@ -58,8 +62,10 @@ svg{
 
 .blue{ fill:#3b82f6; }
 .white{ fill:white; }
+.start{ fill:#facc15; } /* amarillo inicio */
+.meta{ fill:#22c55e; } /* verde meta */
 
-#turn{
+#countdown{
   margin-top:10px;
   font-weight:bold;
 }
@@ -89,7 +95,6 @@ Fecha y hora límite:
 <button onclick="startGame()">Iniciar Semana</button>
 
 <p id="countdown"></p>
-<p id="turn"></p>
 </div>
 
 <div class="box">
@@ -116,227 +121,221 @@ let bluePosition = 0;
 let whitePosition = 0;
 
 let positions = [];
-let currentTurn = "blue";
 
 function startGame(){
 
-let tasks = parseInt(document.getElementById("taskNumber").value);
-let deadlineValue = document.getElementById("deadlineInput").value;
+  let tasks = parseInt(document.getElementById("taskNumber").value);
+  let deadlineValue = document.getElementById("deadlineInput").value;
 
-if(!deadlineValue){
-alert("Selecciona fecha y hora límite");
-return;
-}
+  if(!deadlineValue){
+    alert("Selecciona fecha y hora límite");
+    return;
+  }
 
-totalTasks = tasks;
+  totalTasks = tasks;
 
-bluePosition = 0;
-whitePosition = 0;
-currentTurn = "blue";
+  bluePosition = 0;
+  whitePosition = 0;
 
-deadlineTime = new Date(deadlineValue).getTime();
-active = true;
+  deadlineTime = new Date(deadlineValue).getTime();
+  active = true;
 
-generateSpiral();
-generateTasks();
-updateTurn();
-startCountdown();
+  generateSpiral();
+  generateTasks();
+  updatePlayers();
+  startCountdown();
 }
 
 function generateSpiral(){
 
-const svg = document.getElementById("board");
-svg.innerHTML = "";
-positions = [];
+  const svg = document.getElementById("board");
+  svg.innerHTML = "";
+  positions = [];
 
-const centerX = 200;
-const centerY = 200;
+  const centerX = 200;
+  const centerY = 200;
 
-let angle = 0;
-let radius = 20;
+  let angle = 0;
+  let radius = 20;
 
-/* Punto inicial */
-positions.push({x:centerX, y:centerY});
+  /* Punto inicial */
+  positions.push({x:centerX, y:centerY});
 
-let startCircle = document.createElementNS("http://www.w3.org/2000/svg","circle");
-startCircle.setAttribute("cx",centerX);
-startCircle.setAttribute("cy",centerY);
-startCircle.setAttribute("r",14);
-startCircle.setAttribute("fill","#475569");
-svg.appendChild(startCircle);
+  let startCircle = document.createElementNS("http://www.w3.org/2000/svg","circle");
+  startCircle.setAttribute("cx",centerX);
+  startCircle.setAttribute("cy",centerY);
+  startCircle.setAttribute("r",14);
+  startCircle.setAttribute("class","start");
+  svg.appendChild(startCircle);
 
-/* Casillas de tareas */
-for(let i=0; i<totalTasks; i++){
+  /* Casillas de tareas */
+  for(let i=1; i<=totalTasks; i++){
+    let x = centerX + radius * Math.cos(angle);
+    let y = centerY + radius * Math.sin(angle);
 
-let x = centerX + radius * Math.cos(angle);
-let y = centerY + radius * Math.sin(angle);
+    positions.push({x,y});
 
-positions.push({x,y});
+    let circle = document.createElementNS("http://www.w3.org/2000/svg","circle");
+    circle.setAttribute("cx",x);
+    circle.setAttribute("cy",y);
+    circle.setAttribute("r",12);
 
-let circle = document.createElementNS("http://www.w3.org/2000/svg","circle");
-circle.setAttribute("cx",x);
-circle.setAttribute("cy",y);
-circle.setAttribute("r",12);
-circle.setAttribute("fill","#334155");
-svg.appendChild(circle);
+    /* Si es la última casilla */
+    if(i === totalTasks){
+      circle.setAttribute("class","meta");
+    } else {
+      circle.setAttribute("fill","#334155");
+    }
 
-angle += Math.PI/4;
-radius += 15;
-}
+    svg.appendChild(circle);
 
-drawPlayers();
+    /* Texto Meta en la última casilla */
+    if(i === totalTasks){
+      let text = document.createElementNS("http://www.w3.org/2000/svg","text");
+      text.setAttribute("x", x);
+      text.setAttribute("y", y+4);
+      text.setAttribute("text-anchor","middle");
+      text.setAttribute("fill","white");
+      text.setAttribute("font-size","10px");
+      text.textContent = "🏁 Meta";
+      svg.appendChild(text);
+    }
+
+    angle += Math.PI/4;
+    radius += 15;
+  }
+
+  drawPlayers();
 }
 
 function drawPlayers(){
+  const svg = document.getElementById("board");
 
-const svg = document.getElementById("board");
+  let blue = document.createElementNS("http://www.w3.org/2000/svg","circle");
+  blue.setAttribute("r",8);
+  blue.setAttribute("class","blue");
+  blue.setAttribute("id","bluePlayer");
 
-let blue = document.createElementNS("http://www.w3.org/2000/svg","circle");
-blue.setAttribute("r",8);
-blue.setAttribute("class","blue");
-blue.setAttribute("id","bluePlayer");
+  let white = document.createElementNS("http://www.w3.org/2000/svg","circle");
+  white.setAttribute("r",8);
+  white.setAttribute("class","white");
+  white.setAttribute("id","whitePlayer");
 
-let white = document.createElementNS("http://www.w3.org/2000/svg","circle");
-white.setAttribute("r",8);
-white.setAttribute("class","white");
-white.setAttribute("id","whitePlayer");
-
-svg.appendChild(blue);
-svg.appendChild(white);
-
-updatePlayers();
+  svg.appendChild(blue);
+  svg.appendChild(white);
 }
 
 function updatePlayers(){
+  document.getElementById("bluePlayer").setAttribute("cx",positions[bluePosition].x);
+  document.getElementById("bluePlayer").setAttribute("cy",positions[bluePosition].y);
 
-document.getElementById("bluePlayer")
-.setAttribute("cx",positions[bluePosition].x);
+  document.getElementById("whitePlayer").setAttribute("cx",positions[whitePosition].x);
+  document.getElementById("whitePlayer").setAttribute("cy",positions[whitePosition].y);
 
-document.getElementById("bluePlayer")
-.setAttribute("cy",positions[bluePosition].y);
-
-document.getElementById("whitePlayer")
-.setAttribute("cx",positions[whitePosition].x);
-
-document.getElementById("whitePlayer")
-.setAttribute("cy",positions[whitePosition].y);
-
-updateProgress();
+  updateProgress();
 }
 
 function generateTasks(){
+  let container = document.getElementById("taskContainer");
+  container.innerHTML = "";
 
-let container = document.getElementById("taskContainer");
-container.innerHTML = "";
+  for(let i=1; i<=totalTasks; i++){
 
-for(let i=1; i<=totalTasks; i++){
+    let div = document.createElement("div");
+    div.className = "task";
 
-let div = document.createElement("div");
-div.className = "task";
+    div.innerHTML = `
+      🔵 <input type="checkbox" onchange="completeTask(this,'blue', ${i})"> Tarea Azul ${i}<br>
+      ⚪ <input type="checkbox" onchange="completeTask(this,'white', ${i})"> Tarea Blanco ${i}
+    `;
 
-div.innerHTML = `
-<input type="checkbox" onchange="completeTask(this, ${i})">
- Tarea médica ${i}
-`;
-
-container.appendChild(div);
-}
-}
-
-function completeTask(checkbox, taskNumber){
-
-if(!active){
-checkbox.checked = false;
-return;
+    container.appendChild(div);
+  }
 }
 
-/* Solo permite avanzar si corresponde a su turno */
-if(currentTurn === "blue"){
-if(bluePosition + 1 !== taskNumber){
-checkbox.checked = false;
-alert("🔵 Debes completar la siguiente tarea en orden");
-return;
-}
-bluePosition++;
-currentTurn = "white";
-}else{
-if(whitePosition + 1 !== taskNumber){
-checkbox.checked = false;
-alert("⚪ Debes completar la siguiente tarea en orden");
-return;
-}
-whitePosition++;
-currentTurn = "blue";
-}
+function completeTask(checkbox, player, taskNumber){
 
-checkbox.disabled = true;
+  if(!active){
+    checkbox.checked = false;
+    return;
+  }
 
-updatePlayers();
-updateTurn();
-checkWinner();
-}
+  /* Verifica que no se salten tareas */
+  if(player === "blue"){
+    if(taskNumber !== bluePosition +1){
+      checkbox.checked = false;
+      alert("🔵 Debes completar la siguiente tarea en orden");
+      return;
+    }
+    bluePosition++;
+  } else {
+    if(taskNumber !== whitePosition +1){
+      checkbox.checked = false;
+      alert("⚪ Debes completar la siguiente tarea en orden");
+      return;
+    }
+    whitePosition++;
+  }
 
-function updateTurn(){
-document.getElementById("turn").innerText =
-currentTurn === "blue" ? "Turno: 🔵 Azul" : "Turno: ⚪ Blanco";
-}
-
-function checkWinner(){
-
-if(bluePosition === totalTasks){
-alert("🔵 Azul llegó a la meta 🏆");
-active = false;
-}
-
-if(whitePosition === totalTasks){
-alert("⚪ Blanco llegó a la meta 🏆");
-active = false;
-}
+  checkbox.disabled = true;
+  updatePlayers();
+  checkWinner();
 }
 
 function updateProgress(){
-document.getElementById("progress").innerText =
-"🔵 " + bluePosition + " / " + totalTasks +
-" | ⚪ " + whitePosition + " / " + totalTasks;
+  document.getElementById("progress").innerText =
+    "🔵 " + bluePosition + " / " + totalTasks +
+    " | ⚪ " + whitePosition + " / " + totalTasks;
+}
+
+function checkWinner(){
+  if(bluePosition === totalTasks){
+    alert("🔵 Azul llegó a la meta 🏆");
+    active = false;
+  }
+
+  if(whitePosition === totalTasks){
+    alert("⚪ Blanco llegó a la meta 🏆");
+    active = false;
+  }
 }
 
 function startCountdown(){
 
-clearInterval(timer);
+  clearInterval(timer);
 
-timer = setInterval(function(){
+  timer = setInterval(function(){
 
-if(!active) return;
+    if(!active) return;
 
-let now = new Date().getTime();
-let distance = deadlineTime - now;
+    let now = new Date().getTime();
+    let distance = deadlineTime - now;
 
-if(distance <= 0){
+    if(distance <= 0){
+      clearInterval(timer);
+      active = false;
+      document.getElementById("countdown").innerText = "⛔ Semana Terminada";
 
-clearInterval(timer);
-active = false;
-document.getElementById("countdown").innerText = "⛔ Semana Terminada";
+      if(bluePosition > whitePosition){
+        alert("🔵 Azul gana por avance 🏆");
+      }else if(whitePosition > bluePosition){
+        alert("⚪ Blanco gana por avance 🏆");
+      }else{
+        alert("🤝 Empate");
+      }
 
-if(bluePosition > whitePosition){
-alert("🔵 Azul gana por avance 🏆");
-}else if(whitePosition > bluePosition){
-alert("⚪ Blanco gana por avance 🏆");
-}else{
-alert("🤝 Empate");
-}
+    }else{
 
-}else{
+      let days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      let seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-let days = Math.floor(distance / (1000 * 60 * 60 * 24));
-let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+      document.getElementById("countdown").innerText =
+      "⏳ " + days + "d " + hours + "h " + minutes + "m " + seconds + "s";
+    }
 
-document.getElementById("countdown").innerText =
-"⏳ " + days + "d " + hours + "h " + minutes + "m " + seconds + "s";
-}
-
-},1000);
+  },1000);
 }
 
 </script>
