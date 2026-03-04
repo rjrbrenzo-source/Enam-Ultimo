@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ENAM RA - FASE 2</title>
+<title>ENAM RA - Multijugador</title>
 
 <!-- PWA manifest -->
 <link rel="manifest" href="manifest.json">
@@ -100,6 +100,7 @@ svg{
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
 <script>
+// --- CONFIGURACION FIREBASE ---
 const firebaseConfig = {
   apiKey: "TU_API_KEY",
   authDomain: "TU_PROYECTO.firebaseapp.com",
@@ -109,18 +110,31 @@ const firebaseConfig = {
   messagingSenderId: "TU_ID",
   appId: "TU_APP_ID"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// Login anónimo para pruebas rápidas
-firebase.auth().signInAnonymously().then(() => {
-  console.log("Jugador conectado a Firebase");
-});
-</script>
+// --- LOGIN CON CORREO REAL ---
+function loginUser(){
+  let email = prompt("Ingresa tu correo:");
+  let password = prompt("Ingresa tu contraseña:");
 
-<!-- Registrar Service Worker -->
-<script>
+  firebase.auth().signInWithEmailAndPassword(email, password)
+  .then(() => {
+    alert("Bienvenido " + email);
+  })
+  .catch((error) => {
+    if(error.code === "auth/user-not-found"){
+      firebase.auth().createUserWithEmailAndPassword(email, password)
+      .then(() => alert("Cuenta creada y conectada: " + email))
+      .catch(e => alert("Error: " + e.message));
+    } else {
+      alert("Error: " + error.message);
+    }
+  });
+}
+loginUser();
+
+// --- SERVICE WORKER ---
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function() {
     navigator.serviceWorker.register("sw.js")
@@ -133,10 +147,9 @@ if ("serviceWorker" in navigator) {
 }
 </script>
 </head>
-
 <body>
 
-<h1>🏥 ENAM RA - FASE 2</h1>
+<h1>🏥 ENAM RA - Multijugador</h1>
 
 <div class="container">
 
@@ -216,6 +229,9 @@ function startGame(){
   updatePlayers();
   updateScoreDisplay();
   startCountdown();
+
+  listenOtherPlayer('blue');
+  listenOtherPlayer('white');
 }
 
 // ---------------- TABLERO ----------------
@@ -230,7 +246,6 @@ function generateSpiral(){
   let angle = 0;
   let radius = 20;
 
-  // Punto inicial
   positions.push({x:centerX, y:centerY});
   let startCircle = document.createElementNS("http://www.w3.org/2000/svg","circle");
   startCircle.setAttribute("cx",centerX);
@@ -239,7 +254,6 @@ function generateSpiral(){
   startCircle.setAttribute("class","start");
   svg.appendChild(startCircle);
 
-  // Casillas de tareas
   for(let i=1; i<=totalTasks; i++){
     let x = centerX + radius * Math.cos(angle);
     let y = centerY + radius * Math.sin(angle);
@@ -341,11 +355,11 @@ function completeTask(checkbox, player){
 
 // ---------------- FIREBASE ----------------
 function updatePlayerInFirebase(player, position){
-  db.ref('week'+currentWeek+'/'+player).set({ pos: position });
+  db.ref('weeks/week'+currentWeek+'/'+player).set({ pos: position });
 }
 
 function listenOtherPlayer(player){
-  db.ref('week'+currentWeek+'/'+player+'/pos').on('value', snapshot => {
+  db.ref('weeks/week'+currentWeek+'/'+player+'/pos').on('value', snapshot => {
     const pos = snapshot.val();
     if(pos !== null){
       if(player === 'blue') bluePosition = pos;
@@ -355,9 +369,13 @@ function listenOtherPlayer(player){
   });
 }
 
-// Llamar a los escuchadores al iniciar
-listenOtherPlayer('blue');
-listenOtherPlayer('white');
+function saveWeeklyData(){
+  db.ref('weeks/week'+currentWeek+'/summary').set({
+    blue: bluePosition,
+    white: whitePosition,
+    timestamp: new Date().getTime()
+  });
+}
 
 // ---------------- PROGRESO ----------------
 function updateProgress(){
@@ -381,6 +399,7 @@ function checkWinner(){
     alert("🔵 Azul llegó a la meta 🏆");
     blueTotal += bluePosition;
     active = false;
+    saveWeeklyData();
     currentWeek++;
     updateScoreDisplay();
   }
@@ -388,6 +407,7 @@ function checkWinner(){
     alert("⚪ Blanco llegó a la meta 🏆");
     whiteTotal += whitePosition;
     active = false;
+    saveWeeklyData();
     currentWeek++;
     updateScoreDisplay();
   }
@@ -418,6 +438,7 @@ function startCountdown(){
 
       blueTotal += bluePosition;
       whiteTotal += whitePosition;
+      saveWeeklyData();
       currentWeek++;
       updateScoreDisplay();
 
