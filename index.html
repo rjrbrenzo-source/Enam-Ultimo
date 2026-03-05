@@ -1,223 +1,108 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ENAM RA - Solo Local</title>
-
+<title>ENAM RA - Supabase</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 body{
-  margin:0;
-  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family:Arial;
+  text-align:center;
   background:#0f172a;
   color:white;
-  text-align:center;
-}
-h1{ margin-top:20px; font-weight:700; }
-.container{ max-width:900px; margin:auto; padding:20px; }
-.box{
-  background:#1e293b;
-  padding:20px;
-  border-radius:15px;
-  margin-top:20px;
-  box-shadow:0 0 10px rgba(0,0,0,0.3);
 }
 button{
-  padding:8px 14px;
+  padding:10px;
+  margin:5px;
   border:none;
   border-radius:8px;
   background:#2563eb;
   color:white;
-  cursor:pointer;
-  margin:5px 2px;
-  font-weight:600;
-  transition:0.2s;
+  font-weight:bold;
 }
-button:hover{ background:#1d4ed8; }
-input{ padding:6px; border-radius:5px; border:none; margin:5px; }
-.task{ text-align:left; margin:8px 0; font-size:14px; }
-svg{ background:#0f172a; border-radius:20px; }
-.blue{ fill:#3b82f6; }
-.white{ fill:white; }
-.start{ fill:#facc15; }
-.meta{ fill:#22c55e; }
-#countdown, #weekDisplay{ margin-top:10px; font-weight:600; }
-.progress-bar{ width:100%; background:#334155; border-radius:8px; margin-top:10px; }
-.progress-fill{ height:14px; background:#3b82f6; border-radius:8px; width:0%; transition:0.3s; }
+.box{
+  background:#1e293b;
+  padding:20px;
+  margin:20px;
+  border-radius:12px;
+}
 </style>
 </head>
 <body>
 
-<h1>🏥 ENAM RA - Local</h1>
-
-<div class="container">
+<h2>🏥 ENAM RA - Multijugador</h2>
 
 <div class="box">
-<h3>Configuración Semana</h3>
-Semana: <span id="weekDisplay">1</span><br><br>
-Tareas (8-12):
-<input type="number" id="taskNumber" min="8" max="12" value="10"><br><br>
-Fecha y hora límite:
-<input type="datetime-local" id="deadlineInput"><br><br>
-<button onclick="startGame()">Iniciar Semana</button>
-<p id="countdown"></p>
+<h3>Selecciona tu jugador</h3>
+<button onclick="setPlayer('blue')">🔵 Azul</button>
+<button onclick="setPlayer('white')">⚪ Blanco</button>
+<p id="playerInfo"></p>
 </div>
 
 <div class="box">
-<h3>🎲 Tablero</h3>
-<svg id="board" width="400" height="400"></svg>
-</div>
-
-<div class="box">
-<h3>📋 Checklist ENAM</h3>
-<div id="taskContainer"></div>
-<p id="progress"></p>
-<div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
-<p id="totalScore">🔵 Azul total: 0 | ⚪ Blanco total: 0</p>
+<h3>Avance</h3>
+<button onclick="advance()">Avanzar 1</button>
+<p id="status">Cargando...</p>
 </div>
 
 <script>
-// Variables
-let timer;
-let deadlineTime;
-let active = false;
-let totalTasks = 0;
-let bluePosition = 0, whitePosition = 0;
-let currentWeek = 1;
-let blueTotal = 0, whiteTotal = 0;
-let positions = [];
 
-// ---------------- INICIAR SEMANA ----------------
-function startGame(){
-  let tasks = parseInt(document.getElementById("taskNumber").value);
-  let deadlineValue = document.getElementById("deadlineInput").value;
-  if(!deadlineValue){ alert("Selecciona fecha y hora límite"); return; }
+// 🔥 TU CONFIGURACIÓN SUPABASE
+const supabase = window.supabase.createClient(
+  "https://rktfqnlzmjlrjtfdcxiz.supabase.co",
+  "sb_publishable_AeMFjsXhFm5jxmTWJaaWFA_hgIHS5JT"
+);
 
-  totalTasks = tasks;
-  bluePosition = 0; whitePosition = 0;
-  deadlineTime = new Date(deadlineValue).getTime();
-  active = true;
+let currentPlayer = null;
 
-  document.getElementById("weekDisplay").innerText = currentWeek;
-  generateSpiral();
-  generateTasks();
-  updatePlayers();
-  updateScoreDisplay();
-  startCountdown();
-}
-
-// ---------------- TABLERO ----------------
-function generateSpiral(){
-  const svg = document.getElementById("board");
-  svg.innerHTML=""; positions=[];
-  const centerX=200, centerY=200;
-  let angle=0, radius=20;
-
-  positions.push({x:centerX,y:centerY});
-  let startCircle = document.createElementNS("http://www.w3.org/2000/svg","circle");
-  startCircle.setAttribute("cx",centerX);
-  startCircle.setAttribute("cy",centerY);
-  startCircle.setAttribute("r",14);
-  startCircle.setAttribute("class","start");
-  svg.appendChild(startCircle);
-
-  for(let i=1;i<=totalTasks;i++){
-    let x=centerX+radius*Math.cos(angle);
-    let y=centerY+radius*Math.sin(angle);
-    positions.push({x,y});
-
-    let circle=document.createElementNS("http://www.w3.org/2000/svg","circle");
-    circle.setAttribute("cx",x); circle.setAttribute("cy",y); circle.setAttribute("r",12);
-    if(i===totalTasks){ circle.setAttribute("class","meta");
-      let text=document.createElementNS("http://www.w3.org/2000/svg","text");
-      text.setAttribute("x",x); text.setAttribute("y",y+4); text.setAttribute("text-anchor","middle");
-      text.setAttribute("fill","white"); text.setAttribute("font-size","10px"); text.textContent="🏁 Meta";
-      svg.appendChild(text);
-    } else { circle.setAttribute("fill","#334155"); }
-    angle+=Math.PI/4; radius+=15; svg.appendChild(circle);
-  }
-
-  drawPlayers();
-}
-
-// ---------------- FICHAS ----------------
-function drawPlayers(){
-  const svg=document.getElementById("board");
-  ['blue','white'].forEach(c=>{
-    let circle=document.createElementNS("http://www.w3.org/2000/svg","circle");
-    circle.setAttribute("r",8);
-    circle.setAttribute("class",c);
-    circle.setAttribute("id",c+"Player");
-    svg.appendChild(circle);
-  });
-}
-
-function updatePlayers(){
-  document.getElementById("bluePlayer").setAttribute("cx",positions[bluePosition].x);
-  document.getElementById("bluePlayer").setAttribute("cy",positions[bluePosition].y);
-  document.getElementById("whitePlayer").setAttribute("cx",positions[whitePosition].x);
-  document.getElementById("whitePlayer").setAttribute("cy",positions[whitePosition].y);
-  updateProgress();
-}
-
-// ---------------- CHECKLIST ----------------
-function generateTasks(){
-  let container=document.getElementById("taskContainer");
-  container.innerHTML="";
-  for(let i=1;i<=totalTasks;i++){
-    let div=document.createElement("div");
-    div.className="task";
-    div.innerHTML=`🔵 <input type="checkbox" onchange="completeTask(this,'blue')"> Tarea Azul ${i}<br>
-                  ⚪ <input type="checkbox" onchange="completeTask(this,'white')"> Tarea Blanco ${i}`;
-    container.appendChild(div);
+// Crear fila inicial si no existe
+async function initGame(){
+  const { data } = await supabase.from("game").select("*").eq("id",1);
+  if(data.length === 0){
+    await supabase.from("game").insert([{ id:1, blue:0, white:0 }]);
   }
 }
+initGame();
 
-function completeTask(checkbox,player){
-  if(!active){ checkbox.checked=false; return; }
-  if(player==='blue' && bluePosition<totalTasks){ bluePosition++; }
-  if(player==='white' && whitePosition<totalTasks){ whitePosition++; }
-  checkbox.disabled=true; updatePlayers(); checkWinner();
-}
-
-// ---------------- PROGRESO ----------------
-function updateProgress(){
-  document.getElementById("progress").innerText="🔵 "+bluePosition+" / "+totalTasks+" | ⚪ "+whitePosition+" / "+totalTasks;
-  let percent=Math.max(bluePosition,whitePosition)/totalTasks*100;
-  document.getElementById("progressFill").style.width=percent+"%";
-}
-function updateScoreDisplay(){
-  document.getElementById("totalScore").innerText="🔵 Azul total: "+blueTotal+" | ⚪ Blanco total: "+whiteTotal;
+// Elegir jugador
+function setPlayer(player){
+  currentPlayer = player;
+  document.getElementById("playerInfo").innerText = "Eres: " + (player === "blue" ? "🔵 Azul" : "⚪ Blanco");
 }
 
-// ---------------- GANADOR ----------------
-function checkWinner(){
-  if(bluePosition>=totalTasks){ alert("🔵 Azul llegó a la meta 🏆"); blueTotal+=bluePosition; active=false; currentWeek++; updateScoreDisplay(); }
-  if(whitePosition>=totalTasks){ alert("⚪ Blanco llegó a la meta 🏆"); whiteTotal+=whitePosition; active=false; currentWeek++; updateScoreDisplay(); }
+// Avanzar
+async function advance(){
+  if(!currentPlayer){
+    alert("Selecciona jugador primero");
+    return;
+  }
+
+  const { data } = await supabase.from("game").select("*").eq("id",1);
+  let blue = data[0].blue;
+  let white = data[0].white;
+
+  if(currentPlayer === "blue"){
+    blue++;
+  } else {
+    white++;
+  }
+
+  await supabase.from("game").update({ blue, white }).eq("id",1);
 }
 
-// ---------------- CUENTA REGRESIVA ----------------
-function startCountdown(){
-  clearInterval(timer);
-  timer=setInterval(()=>{
-    if(!active) return;
-    let now=new Date().getTime();
-    let distance=deadlineTime-now;
-    if(distance<=0){
-      clearInterval(timer); active=false; document.getElementById("countdown").innerText="⛔ Semana Terminada";
-      if(bluePosition>whitePosition) alert("🔵 Azul gana por avance 🏆");
-      else if(whitePosition>bluePosition) alert("⚪ Blanco gana por avance 🏆");
-      else alert("🤝 Empate");
-      blueTotal+=bluePosition; whiteTotal+=whitePosition; currentWeek++; updateScoreDisplay();
-    } else {
-      let days=Math.floor(distance/(1000*60*60*24));
-      let hours=Math.floor((distance%(1000*60*60*24))/(1000*60*60));
-      let minutes=Math.floor((distance%(1000*60*60))/(1000*60));
-      let seconds=Math.floor((distance%(1000*60))/1000);
-      document.getElementById("countdown").innerText="⏳ "+days+"d "+hours+"h "+minutes+"m "+seconds+"s";
-    }
-  },1000);
-}
+// Escuchar cambios en tiempo real
+supabase
+.channel('realtime-game')
+.on('postgres_changes',
+  { event: '*', schema: 'public', table: 'game' },
+  payload => {
+    const game = payload.new;
+    document.getElementById("status").innerText =
+      "🔵 Azul: " + game.blue + " | ⚪ Blanco: " + game.white;
+  }
+)
+.subscribe();
+
 </script>
 
 </body>
